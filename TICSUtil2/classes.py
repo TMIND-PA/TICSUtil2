@@ -22,7 +22,7 @@ class TICSLogger:
             full_path = __main__.__file__
             script_name = os.path.basename(os.path.realpath(full_path))
             # print(f"{script_name = }")
-            filename = script_name[:-3] + ".log"
+            filename = script_name[:-3]
 
         if dir is None:
             full_path = __main__.__file__
