@@ -1,7 +1,7 @@
 from TICSUtil2 import TICSLogger, emoji
 
 # New Method
-Log = TICSLogger(dir="./logs").get_log()
+Log = TICSLogger(dir="./logs", msg_col_len=120).get_log()
 Log.info(f"Logger Configured...")
 Log.log(50, f"Sample LOG message")
 Log.debug(f"Sample DEBUG message")

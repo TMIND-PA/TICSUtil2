@@ -15,6 +15,7 @@ class TICSLogger:
         colorize=True,
         file_level="debug",
         console_level="debug",
+        msg_col_len=80,
     ):
 
         if filename is None:
@@ -38,7 +39,7 @@ class TICSLogger:
 
         # Setup loguru logger to TICS formatting
         logger.remove()  # Remove default logger
-        fmt = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <level>{message: <80}</level> | <cyan>{function}</cyan>:<cyan>{line}</cyan>"
+        fmt = f"<green>{{time:YYYY-MM-DD HH:mm:ss.SSS}}</green> | <level>{{level: <8}}</level> | <level>{{message: <{msg_col_len}}}</level> | <cyan>{{function}}</cyan>:<cyan>{{line}}</cyan>"
 
         # Configure console logger
         if console_level is not None:
@@ -51,6 +52,7 @@ class TICSLogger:
                 backtrace=False,
                 diagnose=True,
             )
+            logger.bind(msg_col_len=msg_col_len)
 
         # Configure file logger
         if file_level is not None:
