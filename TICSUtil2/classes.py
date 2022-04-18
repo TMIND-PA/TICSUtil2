@@ -3,7 +3,8 @@ from loguru import logger
 import __main__
 
 # stdout unbuffering
-sys.stdout = os.fdopen(sys.stdout.fileno(), "w", buffering=1)
+# sys.stdout = os.fdopen(sys.stdout.fileno(), "w", buffering=1)
+# sys.stderr = os.fdopen(sys.stderr.fileno(), "w", buffering=1)
 
 
 class TICSLogger:
@@ -44,10 +45,10 @@ class TICSLogger:
         # Configure console logger
         if console_level is not None:
             logger.add(
-                sys.stdout,
+                sys.stderr,
                 level=console_level,
                 format=fmt,
-                colorize=colorize,
+                colorize=colorize
                 enqueue=True,
                 backtrace=False,
                 diagnose=True,

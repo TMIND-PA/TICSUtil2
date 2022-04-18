@@ -15,7 +15,9 @@ Log.info(emoji["namaste"])
 @Log.catch()
 def exception_log():
     try:
-        a = 1 / 0
+        x = 1
+        y = 0
+        a = x / y
     except Exception as e:
         Log.exception(f"Sample EXCEPTION message with traceback. Error: {e}")
 
