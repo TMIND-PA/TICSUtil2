@@ -48,7 +48,7 @@ class TICSLogger:
                 sys.stderr,
                 level=console_level,
                 format=fmt,
-                colorize=colorize
+                colorize=colorize,
                 enqueue=True,
                 backtrace=False,
                 diagnose=True,
