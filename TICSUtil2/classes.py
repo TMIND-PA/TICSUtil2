@@ -17,6 +17,7 @@ class TICSLogger:
         file_level="debug",
         console_level="debug",
         msg_col_len=80,
+        rotation=None,
     ):
 
         if filename is None:
@@ -37,6 +38,9 @@ class TICSLogger:
 
         if console_level is not None:
             console_level = console_level.upper()
+
+        if rotation is None:
+            rotation = "00:00"
 
         # Setup loguru logger to TICS formatting
         logger.remove()  # Remove default logger
@@ -61,13 +65,14 @@ class TICSLogger:
             script_name = os.path.basename(os.path.realpath(full_path))
             log_file_name = os.path.join(dir, filename)
             logger.add(
-                log_file_name + "_{time:YYYYMMDD}.log",
+                log_file_name + ".log",
                 level=file_level,
                 format=fmt,
-                rotation="00:00",
+                rotation=rotation,
                 enqueue=True,
                 backtrace=False,
                 diagnose=True,
+                delay=True,
             )
 
     def get_log(self):
