@@ -12,12 +12,12 @@ class TICSLogger:
         self,
         filename=None,
         dir=None,
-        max_num="10",
+        max_num=10,
         colorize=True,
         file_level="debug",
         console_level="debug",
         msg_col_len=80,
-        rotation=None,
+        rotation="00:00",
     ):
 
         if filename is None:
@@ -38,9 +38,6 @@ class TICSLogger:
 
         if console_level is not None:
             console_level = console_level.upper()
-
-        if rotation is None:
-            rotation = "00:00"
 
         # Setup loguru logger to TICS formatting
         logger.remove()  # Remove default logger
@@ -69,6 +66,7 @@ class TICSLogger:
                 level=file_level,
                 format=fmt,
                 rotation=rotation,
+                retention=max_num,
                 enqueue=True,
                 backtrace=False,
                 diagnose=True,
