@@ -1,5 +1,5 @@
 from datetime import datetime
-import yaml, os
+import yaml, os, configparser
 
 
 def log_time():
@@ -22,3 +22,25 @@ def read_yaml_config(filepath):
         raise
     print(f"Configuration read for {filepath} complete.")
     return config
+
+
+def read_config_file(filename, section, key):
+    key_val = None
+    config = configparser.ConfigParser()
+    try:
+        config.read(filename, encoding="utf-8")
+        key_val = config.get(section, key)
+    except Exception as e:
+        print(f"Error in reading Config File '{filename}'. Error: {e}")
+    return key_val
+
+
+def write_config_file(filename, section, key, value):
+    config = configparser.ConfigParser()
+    try:
+        config.read(filename, encoding="utf-8")
+        config.set(section, key, value)
+        with open(filename, "w") as configfile:
+            config.write(configfile)
+    except Exception as e:
+        print(f"Error in writing Config File '{filename}'. Error: {e}")
