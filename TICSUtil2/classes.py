@@ -58,8 +58,6 @@ class TICSLogger:
 
         # Configure file logger
         if file_level is not None:
-            full_path = __main__.__file__
-            script_name = os.path.basename(os.path.realpath(full_path))
             log_file_name = os.path.join(dir, filename)
             logger.add(
                 log_file_name + ".log",
