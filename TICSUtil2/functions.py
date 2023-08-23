@@ -9,8 +9,9 @@ def log_time():
 
 
 def read_yaml_config(filepath, suppress_msgs=False):
-    filename = filepath.split(".")[0]
-    fileext = filepath.split(".")[1]
+    filepath_split = filepath.rsplit(".", 1) or filepath
+    filename = filepath_split[0]
+    fileext = filepath_split[1]
     filepath_dev = filename + "_dev" + "." + fileext
     if os.path.isfile(filepath_dev):
         filepath = filepath_dev
