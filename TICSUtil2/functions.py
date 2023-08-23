@@ -1,5 +1,6 @@
 from datetime import datetime
-import yaml, os, configparser
+import yaml, os, configparser, rsa, psutil
+from base64 import b64decode
 
 
 def log_time():
@@ -46,3 +47,99 @@ def write_config_file(filename, section, key, value):
             config.write(configfile)
     except Exception as e:
         print(f"Error in writing Config File '{filename}'. Error: {e}")
+
+
+def get_mac_all(family):
+    for interface, snics in psutil.net_if_addrs().items():
+        for snic in snics:
+            if snic.family == family:
+                yield snic.address
+
+
+def check_license(license_file, application):
+    status = 0
+    if os.path.exists(license_file):
+        config = configparser.ConfigParser()
+        config.read(license_file, encoding="utf-8")
+        if "license" in config:
+            section = config["license"]
+            if (
+                "application" in section
+                and "customer" in section
+                and "reference" in section
+                and "expire" in section
+                and "key" in section
+            ):
+                pubkey = rsa.PublicKey(
+                    7514513144282372129647063215394916456869398537697968821675421023637195249518021134485320680971729707960684956187071298549155245246725650219448549812838423,
+                    65537,
+                )
+                addr = get_mac_all(psutil.AF_LINK)
+                for mac in addr:
+                    data = (
+                        mac
+                        + section["application"]
+                        + section["customer"]
+                        + section["reference"]
+                        + section["expire"]
+                    )
+                    try:
+                        rsa.verify(
+                            data.encode("utf-8"),
+                            b64decode(section["key"].encode()),
+                            pubkey,
+                        )
+                    except Exception as e:
+                        msg = str(e)
+                    else:
+                        status = 1
+                        break
+                if status < 1:
+                    msg = f"This license is invalid for this machine"
+                    return status, None, None, None, msg
+                else:
+                    if (
+                        datetime.strptime(section["expire"], "%Y-%m-%d").date()
+                        >= datetime.now().date()
+                    ):
+                        if application == section["application"]:
+                            status = 1
+                            msg = f"License key Registed to {section['customer']} for Application: {section['application']} valid till: {section['expire']}"
+                            return (
+                                status,
+                                section["application"],
+                                section["customer"],
+                                section["expire"],
+                                msg,
+                            )
+                        else:
+                            status = 101
+                            msg = f"License is not valid for the application"
+                            return (
+                                status,
+                                section["application"],
+                                section["customer"],
+                                section["expire"],
+                                msg,
+                            )
+                    else:
+                        status = 102
+                        msg = f"License expired on {section['expire']}"
+                        return (
+                            status,
+                            section["application"],
+                            section["customer"],
+                            section["expire"],
+                            msg,
+                        )
+            else:
+                msg = f"Invalid license file"
+                status = 103
+                return status, None, None, None, msg
+        else:
+            msg = f"Invalid license file"
+            status = 104
+            return status, None, None, None, msg
+    msg = f"License file not found"
+    status = 6
+    return status, None, None, None, msg
