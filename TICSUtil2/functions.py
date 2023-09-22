@@ -105,7 +105,7 @@ def check_license(license_file, application):
                     ):
                         if application == section["application"]:
                             status = 1
-                            msg = f"License key Registed to {section['customer']} for Application: {section['application']} valid till: {section['expire']}"
+                            msg = f"License key Registered to {section['customer']} for Application: {section['application']} valid till: {section['expire']}"
                             return (
                                 status,
                                 section["application"],
