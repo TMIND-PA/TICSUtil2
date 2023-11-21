@@ -1,10 +1,41 @@
-import os, sys
+import os, sys, inspect, datetime, json
 from loguru import logger
 import __main__
 
 # stdout unbuffering
 # sys.stdout = os.fdopen(sys.stdout.fileno(), "w", buffering=1)
 # sys.stderr = os.fdopen(sys.stderr.fileno(), "w", buffering=1)
+
+
+class Alarm:
+    """Class for rasing alarms from TICS programs. TICSAlmMgr must be running for this to work"""
+
+    def __init__(self, redis_client, prg_name: str, call_depth: int = 2):
+        self.rclient = redis_client
+        self.program = prg_name
+        self.call_depth = call_depth
+
+    def send_alarm(self, alm_prio: str, alm_desc: str):
+        alm_data: dict = {}
+        call_func = inspect.stack()[self.call_depth][3]
+        alm_data["alm_dt"] = str(datetime.datetime.now())
+        alm_data["alm_tag"] = self.program
+        alm_data["alm_type"] = call_func
+        alm_data["alm_desc"] = alm_desc
+        alm_data["alm_prio"] = alm_prio
+
+        # print(call_func)
+
+        self.rclient.publish("alarm_queue", json.dumps(alm_data))
+
+    def high(self, alm_desc: str):
+        self.send_alarm(alm_prio="HIGH", alm_desc=alm_desc)
+
+    def medium(self, alm_desc: str):
+        self.send_alarm(alm_prio="MEDIUM", alm_desc=alm_desc)
+
+    def low(self, alm_desc: str):
+        self.send_alarm(alm_prio="LOW", alm_desc=alm_desc)
 
 
 class TICSLogger:
@@ -19,7 +50,6 @@ class TICSLogger:
         msg_col_len=80,
         rotation="00:00",
     ):
-
         if filename is None:
             full_path = __main__.__file__
             script_name = os.path.basename(os.path.realpath(full_path))
