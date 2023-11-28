@@ -7,6 +7,20 @@ import __main__
 # sys.stderr = os.fdopen(sys.stderr.fileno(), "w", buffering=1)
 
 
+class Event:
+    """Class for sending events from TICS programs. TICSEvtMgr must be running for this to work"""
+
+    def __init__(self, redis_client, pub_channel: str = "event_queue"):
+        self.rclient = redis_client
+        self.channel = pub_channel
+
+    def send(self, event: str, data, tag_val: int = 1):
+        evt_dict = {"tag": event, "value": tag_val, "data": data}
+        print(f"event_data: {evt_dict}")
+
+        self.rclient.publish(self.channel, json.dumps(evt_dict))
+
+
 class Alarm:
     """Class for rasing alarms from TICS programs. TICSAlmMgr must be running for this to work"""
 
