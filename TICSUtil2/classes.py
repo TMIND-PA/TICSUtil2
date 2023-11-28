@@ -16,7 +16,7 @@ class Event:
 
     def send(self, event: str, data, tag_val: int = 1):
         evt_dict = {"tag": event, "value": tag_val, "data": data}
-        print(f"event_data: {evt_dict}")
+        # print(f"event_data: {evt_dict}")
 
         self.rclient.publish(self.channel, json.dumps(evt_dict))
 
