@@ -51,6 +51,16 @@ class Alarm:
     def low(self, alm_desc: str):
         self.send_alarm(alm_prio="LOW", alm_desc=alm_desc)
 
+    def oplog(self, desc: str, piece: str = "", host:str = "", user: str = "", func: str = ""):
+        log_data: dict = {}
+        log_data["opertime"] = str(datetime.datetime.now())
+        log_data["opername"] = user
+        log_data["function"] = func
+        log_data["terminal"] = host
+        log_data["piecename"] = piece
+        log_data["message"] = desc
+        self.rclient.publish("log_queue", json.dumps(log_data))
+
 
 class TICSLogger:
     def __init__(
