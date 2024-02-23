@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="TICSUtil2",
-    version="1.1.0",
+    version="2.0.0",
     description="This package is a library of small functions used in TICS development.",
     author="Sunil Goothy",
     author_email="sunil.goothy@tmeic.in",

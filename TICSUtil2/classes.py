@@ -51,7 +51,7 @@ class Alarm:
     def low(self, alm_desc: str):
         self.send_alarm(alm_prio="LOW", alm_desc=alm_desc)
 
-    def oplog(self, desc: str, piece: str = "", host:str = "", user: str = "", func: str = ""):
+    def oplog(self, desc: str, piece: str = "", host: str = "", user: str = "", func: str = ""):
         log_data: dict = {}
         log_data["opertime"] = str(datetime.datetime.now())
         log_data["opername"] = user
@@ -62,10 +62,18 @@ class Alarm:
         self.rclient.publish("log_queue", json.dumps(log_data))
 
 
+def make_filter(name):
+    def filter(record):
+        return record["extra"].get("name") == name
+
+    return filter
+
+
 class TICSLogger:
     def __init__(
         self,
         filename=None,
+        filter="default",
         dir=None,
         max_num=10,
         colorize=True,
@@ -74,6 +82,8 @@ class TICSLogger:
         msg_col_len=80,
         rotation="00:00",
     ):
+        self.filter = filter
+        self.msg_col_len = msg_col_len
         if filename is None:
             full_path = __main__.__file__
             script_name = os.path.basename(os.path.realpath(full_path))
@@ -94,11 +104,11 @@ class TICSLogger:
             console_level = console_level.upper()
 
         # Setup loguru logger to TICS formatting
-        logger.remove()  # Remove default logger
         fmt = f"<green>{{time:YYYY-MM-DD HH:mm:ss.SSS}}</green> | <level>{{level: <8}}</level> | <level>{{message: <{msg_col_len}}}</level> | <cyan>{{function}}</cyan>:<cyan>{{line}}</cyan>"
 
         # Configure console logger
         if console_level is not None:
+            logger.remove()  # Remove default logger
             logger.add(
                 sys.stderr,
                 level=console_level,
@@ -108,7 +118,6 @@ class TICSLogger:
                 backtrace=False,
                 diagnose=True,
             )
-            logger.bind(msg_col_len=msg_col_len)
 
         # Configure file logger
         if file_level is not None:
@@ -116,6 +125,7 @@ class TICSLogger:
             logger.add(
                 log_file_name + ".log",
                 level=file_level,
+                filter=make_filter(self.filter),
                 format=fmt,
                 rotation=rotation,
                 retention=max_num,
@@ -126,4 +136,4 @@ class TICSLogger:
             )
 
     def get_log(self):
-        return logger
+        return logger.bind(msg_col_len=self.msg_col_len, name=self.filter)

@@ -11,6 +11,13 @@ Log.error(f"Sample ERROR message")
 Log.critical(f"Sample CRITICAL message")
 Log.info(emoji["namaste"])
 
+Log2 = TICSLogger(
+    dir="./logs", console_level=None, filename="two", filter="two", msg_col_len=90, rotation="100 KB"
+).get_log()
+Log2.info("Second Log")
+
+Log.info("After second log")
+
 
 @Log.catch()
 def exception_log():
@@ -24,6 +31,7 @@ def exception_log():
 
 # Exception logging
 exception_log()
+
 
 # Logging from classes
 class TestClass:
