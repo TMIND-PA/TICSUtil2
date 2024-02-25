@@ -61,6 +61,21 @@ class Alarm:
         log_data["message"] = desc
         self.rclient.publish("log_queue", json.dumps(log_data))
 
+class LogRotation:
+    """ Hourly Log Rotaion , interval -> Hours [must be interger]"""
+    def __init__(self, interval) -> None:
+        self.rotationInterval = interval
+        self.setNextChangeTimeStamp()
+        
+    def setNextChangeTimeStamp(self):
+        self.nextChangeTimeStamp:datetime = datetime.datetime.now().astimezone().replace(minute=0, second=0, microsecond=0) + datetime.timedelta(hours = self.rotationInterval)
+
+    def logRotate(self, message, file):
+        logTime = message.record["time"]
+        if  logTime > self.nextChangeTimeStamp :
+            self.setNextChangeTimeStamp()
+            return True
+        return False
 
 def make_filter(name):
     def filter(record):
@@ -102,6 +117,11 @@ class TICSLogger:
 
         if console_level is not None:
             console_level = console_level.upper()
+
+        #Hourly Log Rotation   
+        if rotation == "HOURLY":
+            logRotator = LogRotation(interval = 1)
+            rotation = logRotator.logRotate
 
         # Setup loguru logger to TICS formatting
         fmt = f"<green>{{time:YYYY-MM-DD HH:mm:ss.SSS}}</green> | <level>{{level: <8}}</level> | <level>{{message: <{msg_col_len}}}</level> | <cyan>{{function}}</cyan>:<cyan>{{line}}</cyan>"

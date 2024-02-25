@@ -1,3 +1,5 @@
+import datetime
+import time
 from TICSUtil2 import TICSLogger, emoji
 
 # New Method
@@ -12,12 +14,13 @@ Log.critical(f"Sample CRITICAL message")
 Log.info(emoji["namaste"])
 
 Log2 = TICSLogger(
-    dir="./logs", console_level=None, filename="two", filter="two", msg_col_len=90, rotation="100 KB"
+    dir="./logs", console_level=None, filename="two", filter="two", msg_col_len=90, rotation="HOURLY"
 ).get_log()
 Log2.info("Second Log")
 
 Log.info("After second log")
 
+Log2.info("Second Again Log")
 
 @Log.catch()
 def exception_log():
@@ -39,8 +42,10 @@ class TestClass:
         Log.info(f"TestClass Initialized")
 
     def test_func(self):
-        Log.info(f"Inside Test Func")
-
+        stopAt = datetime.datetime.now() + datetime.timedelta(hours=3)
+        while datetime.datetime.now() < stopAt:
+            Log2.info(f"Inside Test Func")
+            time.sleep(2)
 
 test1 = TestClass()
 test1.test_func()
