@@ -66,16 +66,34 @@ class LogRotation:
     def __init__(self, interval) -> None:
         self.rotationInterval = interval
         self.setNextChangeTimeStamp()
+        self.startUp = True
         
     def setNextChangeTimeStamp(self):
         self.nextChangeTimeStamp:datetime = datetime.datetime.now().astimezone().replace(minute=0, second=0, microsecond=0) + datetime.timedelta(hours = self.rotationInterval)
 
     def logRotate(self, message, file):
+        # rotate the log if the log time is in the next hour
         logTime = message.record["time"]
         if  logTime > self.nextChangeTimeStamp :
             self.setNextChangeTimeStamp()
             return True
+        
+        #rotate log if the current log file hour in not the current hour. Checked only at startup once.
+        if self.startUp:
+            try:
+                with open(file.name, 'r') as file:
+                    firstLine = file.readline()
+                    timefomrat = "%Y-%m-%d %H:%M:%S"
+                    lastLogFileStartTime :datetime.datetime = datetime.datetime.strptime(firstLine.split('|')[0].split('.')[0]  , timefomrat)
+                    if lastLogFileStartTime.replace(minute=0, second=0, microsecond=0)  != datetime.datetime.now().replace(minute=0, second=0, microsecond=0):
+                        self.startUp = False
+                        return True
+            except Exception:
+                        pass
+            self.startUp = False
+
         return False
+    
 
 def make_filter(name):
     def filter(record):
@@ -118,8 +136,8 @@ class TICSLogger:
         if console_level is not None:
             console_level = console_level.upper()
 
-        #Hourly Log Rotation   
-        if rotation == "HOURLY":
+        #Hourly Log Rotation - with one hour are interval
+        if rotation == "HOURLY" or rotation == "hourly":
             logRotator = LogRotation(interval = 1)
             rotation = logRotator.logRotate
 
