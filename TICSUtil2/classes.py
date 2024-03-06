@@ -106,7 +106,7 @@ class TICSLogger:
     def __init__(
         self,
         filename=None,
-        filter="default",
+        filter=None,
         dir=None,
         max_num=10,
         colorize=True,
@@ -115,7 +115,6 @@ class TICSLogger:
         msg_col_len=80,
         rotation="00:00",
     ):
-        self.filter = filter
         self.msg_col_len = msg_col_len
         if filename is None:
             full_path = __main__.__file__
@@ -141,8 +140,13 @@ class TICSLogger:
             logRotator = LogRotation(interval = 1)
             rotation = logRotator.logRotate
 
-        # Setup loguru logger to TICS formatting
+        # Setup Filter for multi instance of Log File
+        self.filter = "Default" if not filter else filter
+        filter = make_filter(self.filter)
+
+        # Setup loguru logger to TICS formatting.
         fmt = f"<green>{{time:YYYY-MM-DD HH:mm:ss.SSS}}</green> | <level>{{level: <8}}</level> | <level>{{message: <{msg_col_len}}}</level> | <cyan>{{function}}</cyan>:<cyan>{{line}}</cyan>"
+        
 
         # Configure console logger
         if console_level is not None:
@@ -163,7 +167,7 @@ class TICSLogger:
             logger.add(
                 log_file_name + ".log",
                 level=file_level,
-                filter=make_filter(self.filter),
+                filter=filter,
                 format=fmt,
                 rotation=rotation,
                 retention=max_num,
