@@ -61,6 +61,39 @@ class Alarm:
         log_data["message"] = desc
         self.rclient.publish("log_queue", json.dumps(log_data))
 
+class LogRotation:
+    """ Hourly Log Rotaion , interval -> Hours [must be interger]"""
+    def __init__(self, interval) -> None:
+        self.rotationInterval = interval
+        self.setNextChangeTimeStamp()
+        self.startUp = True
+        
+    def setNextChangeTimeStamp(self):
+        self.nextChangeTimeStamp:datetime = datetime.datetime.now().astimezone().replace(minute=0, second=0, microsecond=0) + datetime.timedelta(hours = self.rotationInterval)
+
+    def logRotate(self, message, file):
+        # rotate the log if the log time is in the next hour
+        logTime = message.record["time"]
+        if  logTime > self.nextChangeTimeStamp :
+            self.setNextChangeTimeStamp()
+            return True
+        
+        #rotate log if the current log file hour in not the current hour. Checked only at startup once.
+        if self.startUp:
+            try:
+                with open(file.name, 'r') as file:
+                    firstLine = file.readline()
+                    timefomrat = "%Y-%m-%d %H:%M:%S"
+                    lastLogFileStartTime :datetime.datetime = datetime.datetime.strptime(firstLine.split('|')[0].split('.')[0]  , timefomrat)
+                    if lastLogFileStartTime.replace(minute=0, second=0, microsecond=0)  != datetime.datetime.now().replace(minute=0, second=0, microsecond=0):
+                        self.startUp = False
+                        return True
+            except Exception:
+                        pass
+            self.startUp = False
+
+        return False
+    
 
 def make_filter(name):
     def filter(record):
@@ -73,7 +106,7 @@ class TICSLogger:
     def __init__(
         self,
         filename=None,
-        filter="default",
+        filter=None,
         dir=None,
         max_num=10,
         colorize=True,
@@ -82,7 +115,6 @@ class TICSLogger:
         msg_col_len=80,
         rotation="00:00",
     ):
-        self.filter = filter
         self.msg_col_len = msg_col_len
         if filename is None:
             full_path = __main__.__file__
@@ -103,8 +135,18 @@ class TICSLogger:
         if console_level is not None:
             console_level = console_level.upper()
 
-        # Setup loguru logger to TICS formatting
+        #Hourly Log Rotation - with one hour are interval
+        if rotation == "HOURLY" or rotation == "hourly":
+            logRotator = LogRotation(interval = 1)
+            rotation = logRotator.logRotate
+
+        # Setup Filter for multi instance of Log File
+        self.filter = "Default" if not filter else filter
+        filter = make_filter(self.filter)
+
+        # Setup loguru logger to TICS formatting.
         fmt = f"<green>{{time:YYYY-MM-DD HH:mm:ss.SSS}}</green> | <level>{{level: <8}}</level> | <level>{{message: <{msg_col_len}}}</level> | <cyan>{{function}}</cyan>:<cyan>{{line}}</cyan>"
+        
 
         # Configure console logger
         if console_level is not None:
@@ -125,7 +167,7 @@ class TICSLogger:
             logger.add(
                 log_file_name + ".log",
                 level=file_level,
-                filter=make_filter(self.filter),
+                filter=filter,
                 format=fmt,
                 rotation=rotation,
                 retention=max_num,
