@@ -46,8 +46,10 @@ def write_config_file(filename, section, key, value):
         config.set(section, key, value)
         with open(filename, "w") as configfile:
             config.write(configfile)
+        return True
     except Exception as e:
         print(f"Error in writing Config File '{filename}'. Error: {e}")
+        return False
 
 
 def get_mac_all(family):
