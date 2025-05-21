@@ -1,6 +1,9 @@
 from datetime import datetime
-import yaml, os, configparser, rsa, psutil
+import yaml, os, configparser, rsa, psutil, base64
 from base64 import b64decode
+from getmac import get_mac_address
+from ipaddress import IPv4Address
+from cryptography.fernet import Fernet
 
 
 def log_time():
@@ -79,13 +82,7 @@ def check_license(license_file, application):
                 )
                 addr = get_mac_all(psutil.AF_LINK)
                 for mac in addr:
-                    data = (
-                        mac
-                        + section["application"]
-                        + section["customer"]
-                        + section["reference"]
-                        + section["expire"]
-                    )
+                    data = mac + section["application"] + section["customer"] + section["reference"] + section["expire"]
                     try:
                         rsa.verify(
                             data.encode("utf-8"),
@@ -101,10 +98,7 @@ def check_license(license_file, application):
                     msg = f"This license is invalid for this machine"
                     return status, None, None, None, msg
                 else:
-                    if (
-                        datetime.strptime(section["expire"], "%Y-%m-%d").date()
-                        >= datetime.now().date()
-                    ):
+                    if datetime.strptime(section["expire"], "%Y-%m-%d").date() >= datetime.now().date():
                         if application == section["application"]:
                             status = 1
                             msg = f"License key Registered to {section['customer']} for Application: {section['application']} valid till: {section['expire']}"
@@ -146,3 +140,30 @@ def check_license(license_file, application):
     msg = f"License file not found"
     status = 6
     return status, None, None, None, msg
+
+
+def decrypt(password, ipaddress):
+    encoded_key = b"U3FidkxCQ1dMSFBtcTZwU3VjVnFlaFNQRU45RHQwOGJ2azFScG0wT2ZaWT0=\n"
+    key = base64.decodebytes(encoded_key)
+    f = Fernet(key)
+    try:
+        IPv4Address(ipaddress)
+        mac = get_mac_address(ip=ipaddress)
+        # space in password not allowed
+        if " " in password:
+            output = None
+        else:
+            if password.__class__ == str:
+                token = f.decrypt(password.encode("utf-8"))
+            elif password.__class__ == bytes:
+                token = f.decrypt(password)
+            else:
+                password = str(password)
+                token = f.decrypt(password.encode("utf-8"))
+            if token.decode("utf-8").find(mac) != -1:
+                output = token.decode("utf-8").replace(mac, "")
+            else:
+                output = None
+    except Exception as e:
+        output = None
+    return output
