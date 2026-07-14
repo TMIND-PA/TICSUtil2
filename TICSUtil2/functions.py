@@ -61,7 +61,6 @@ def get_mac_all(family):
             if snic.family == family:
                 yield snic.address
 
-
 def check_license(license_file, application):
     status = 0
     if os.path.exists(license_file):
@@ -74,15 +73,17 @@ def check_license(license_file, application):
                 and "customer" in section
                 and "reference" in section
                 and "expire" in section
+                and "modules" in section
                 and "key" in section
             ):
                 pubkey = rsa.PublicKey(
                     7514513144282372129647063215394916456869398537697968821675421023637195249518021134485320680971729707960684956187071298549155245246725650219448549812838423,
                     65537,
                 )
+                modules = section["modules"]
                 addr = get_mac_all(psutil.AF_LINK)
                 for mac in addr:
-                    data = mac + section["application"] + section["customer"] + section["reference"] + section["expire"]
+                    data = mac + section["application"] + section["customer"] + section["reference"] + section["expire"]+modules
                     try:
                         rsa.verify(
                             data.encode("utf-8"),
@@ -99,7 +100,8 @@ def check_license(license_file, application):
                     return status, None, None, None, msg
                 else:
                     if datetime.strptime(section["expire"], "%Y-%m-%d").date() >= datetime.now().date():
-                        if application == section["application"]:
+                        allowed_modules = [m.strip() for m in modules.split(",")]
+                        if application in allowed_modules:
                             status = 1
                             msg = f"License key Registered to {section['customer']} for Application: {section['application']} valid till: {section['expire']}"
                             return (
